@@ -1,0 +1,333 @@
+import os
+import re
+import threading
+import time
+from datetime import datetime
+from math import cos, sin
+import logging
+
+import kivy
+import numpy as np
+import obd
+from kivy.app import App
+from kivy.clock import Clock, mainthread
+from kivy.config import Config
+from kivy.lang import Builder
+from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
+                             StringProperty)
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.button import Button
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.stacklayout import StackLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.widget import Widget
+from kivy.uix.popup import Popup
+from kivy.uix.settings import SettingsWithSidebar
+from kivy.core.window import Window
+
+from utils.obdutility import OBDUtility
+from utils.vehicle import Vehicle
+from settings.settings_json import obd_json, vehicle_json
+from utils.gauges import Gauge, GaugeSmall
+
+global developermode
+developermode = False
+
+global obd_mac_address
+obd_mac_address = "8C:DE:52:C4:E5:84"
+
+####===Configuration===####
+Config.set('graphics', 'width', '800')
+Config.set('graphics', 'height', '480')
+Config.set('graphics', 'resizable', False)
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
+Window.size = (800, 480)
+###########################
+
+
+class ImageButton(ButtonBehavior, Image):
+    pass
+
+
+class VehicleConnect(App):
+
+    ###########===Kivy Binded Variables==##################
+    speedOBD = StringProperty('0')
+    speedOBDValue = NumericProperty(0)
+
+    rpmOBD = StringProperty('0')
+    rpmOBDValue = NumericProperty(0)
+
+    coolantTemperatureOBD = StringProperty('0')
+    coolantTemperatureOBDValue = NumericProperty(0)
+
+    throttlePositionOBD = StringProperty('0')
+    throttlePositionOBDValue = NumericProperty(0)
+
+    intakePressureOBD = StringProperty('0')
+    intakePressureOBDValue = NumericProperty(0)
+
+    timingAdvanceOBD = StringProperty('0')
+    timingAdvanceOBDValue = NumericProperty(0)
+
+    mafOBD = StringProperty('0')
+    mafOBDValue = NumericProperty(0)
+
+    gear = StringProperty('0')
+
+    obdStatus = StringProperty('0')
+
+    #######################################################
+
+    def build(self):
+        self.settings_cls = SettingsWithSidebar
+        main = Builder.load_file("data/main.kv")
+        sm = MyScreenManager()
+        return main
+
+    def build_config(self, config):
+        config.setdefaults('OBD', {
+            'obdport': '/dev/rfcomm1',
+            'obdmacaddress': '00:00:00:00:00:00'}
+
+        )
+
+        config.setdefaults('Vehicle', {
+            'firstGear': 0.00,
+            'secondGear': 0.00,
+            'thirdGear': 0.00,
+            'fourthGear': 0.00,
+            'fifthGear': 0.00,
+            'sixthGear': 0.00,
+            'axelRatio':
+            0.00,
+            'tireDiamater': 0.00,
+            'maxRPM': 7000
+
+        })
+
+    def build_settings(self, settings):
+        # OBD Panel
+        settings.add_json_panel('OBD', self.config, data=obd_json)
+
+        # Vehicle Panel
+        settings.add_json_panel('Vehicle', self.config, data=vehicle_json)
+
+    def on_config_change(self, config, section, key, value):
+        if key == "maxRPM":
+            self.vehicle.setup_vehicle(max_rpm=self.config.get(
+                'Vehicle', 'maxRPM'))
+        elif key == "obdport":
+            # change obd port
+            obdUtility.connect_to_obd(connection=self.config.get(
+                'OBD', 'obdport'), obd_mac=self.config.get(
+                'OBD', 'obdmacaddress'))
+        elif key == "firstGear" or "secondGear" or "thirdGear" or "fourthGear" or "fifthGear" or "sixthGear":
+            try:
+                # get gear settings
+                first_gear = float(self.config.get('Vehicle', 'firstGear'))
+                second_gear = float(self.config.get('Vehicle', 'secondGear'))
+                third_gear = float(self.config.get('Vehicle', 'thirdGear'))
+                fourth_gear = float(self.config.get('Vehicle', 'fourthGear'))
+                fifth_gear = float(self.config.get('Vehicle', 'fifthGear'))
+                sixth_gear = float(self.config.get('Vehicle', 'sixthGear'))
+
+                # build list of gears* with gear ratio
+                transmission_ratio_list = {
+                    1: first_gear, 2: second_gear, 3: third_gear, 4: fourth_gear, 5: fifth_gear, 6: sixth_gear}
+
+                # set transmission ratios
+                self.vehicle.setup_vehicle(
+                    transmission_ratios=transmission_ratio_list)
+                self.vehicle.generate_gear_data()
+            except:
+                logging.warning("Error while loading the vehicle information")
+        elif key == "axelRatio":
+            axel_ratio = float(self.config.get('Vehicle', 'axelRatio'))
+            self.vehicle.setup_vehicle(axel_ratio=axel_ratio)
+            self.vehicle.generate_gear_data()
+        elif key == "tireDiamater":
+            tire_diamater = float(self.config.get('Vehicle', 'tireDiameter'))
+            self.vehicle.setup_vehicle(tire_diamater=tire_diamater)
+            self.vehicle.generate_gear_data()
+        elif key == "obdmacaddress":
+            obd_mac_address = self.config.get('OBD', 'obdmacaddress')
+
+    def on_start(self):
+
+        # Initialize Vehicle Class
+        self.vehicle = Vehicle()
+        try:
+            # Initialize Saved Settings
+            first_gear = float(self.config.get('Vehicle', 'firstGear'))
+            second_gear = float(self.config.get('Vehicle', 'secondGear'))
+            third_gear = float(self.config.get('Vehicle', 'thirdGear'))
+            fourth_gear = float(self.config.get('Vehicle', 'fourthGear'))
+            fifth_gear = float(self.config.get('Vehicle', 'fifthGear'))
+            sixth_gear = float(self.config.get('Vehicle', 'sixthGear'))
+            axel_ratio = float(self.config.get('Vehicle', 'axelRatio'))
+            tire_diamater = float(self.config.get('Vehicle', 'tireDiamater'))
+            max_rpm = float(self.config.get('Vehicle', 'maxRPM'))
+            transmission_ratio_list = {1: first_gear, 2: second_gear,
+                                       3: third_gear, 4: fourth_gear, 5: fifth_gear, 6: sixth_gear}
+
+            # Setup Vehicle (for Gear Calculation and General Vehicle Information)
+            self.vehicle.setup_vehicle(
+                axel_ratio=axel_ratio, tire_size=tire_diamater, transmission_ratios=transmission_ratio_list, max_rpm=max_rpm)
+        except:
+            logging.error("Failed to load vehicle information from settings")
+
+        # Generate Gear Data to be used for Gear Calculation
+        self.vehicle.generate_gear_data()
+
+        # updates user interface with obd data
+        
+
+        self.update_obd_data = threading.Thread(target=self.refresh_obd)
+        self.update_obd_data.setDaemon(True)
+        self.update_obd_data.start()
+
+        Clock.schedule_interval(lambda x: self.update_obd(), .2)
+
+    def refresh_obd(self):
+        # connects to obd port
+        print(self.config.get(
+            'OBD', 'obdport'))
+        obdUtility.connect_to_obd(connection=self.config.get(
+            'OBD', 'obdport'), obd_mac=obd_mac_address)
+
+        # constantly refreshes obd data
+        while True:
+            obdUtility.refresh_obd_data()
+            time.sleep(.2)
+
+    
+    @mainthread
+    def update_obd(self):
+        try:
+            # Get Dict of fetched OBD Data
+            obd_data = obdUtility.get_obd_data()
+        
+            # Get OBD Values from Returned Dict
+            # Convert Values to Percent (For Gauges)
+            # Set binded StringProperty and NumericProperty values (kivy) to obd data
+
+            speedValue = (re.findall('\d+', str(obd_data["speed"])))
+            self.speedOBDValue = int(speedValue[0])/140
+            self.speedOBD = str(speedValue[0])
+
+            rpmValue = (re.findall('\d+', str(obd_data["rpm"])))
+            self.rpmOBDValue = int(rpmValue[0])/int(self.vehicle.max_rpm)
+            self.rpmOBD = str(rpmValue[0])
+
+            coolantTemperatureValue = (re.findall(
+                '\d+', str(obd_data["coolant_temp"])))
+            self.coolantTemperatureOBDValue = int(
+                coolantTemperatureValue[0])/160
+            self.coolantTemperatureOBD = str(coolantTemperatureValue[0])
+
+            throttlePositionValue = (re.findall(
+                '\d+', str(obd_data["throttle_position"])))
+            self.throttlePositionOBDValue = int(
+                throttlePositionValue[0])/100
+            self.throttlePositionOBD = str(throttlePositionValue[0])
+
+            intakePressureValue = (re.findall(
+                '\d+', str(obd_data["intake_pressure"])))
+            self.intakePressureOBDValue = int(intakePressureValue[0])/150
+            self.intakePressureOBD = str(intakePressureValue[0])
+
+            timingAdvanceValue = (re.findall(
+                '\d+', str(obd_data["timing_advance"])))
+            self.timingAdvanceOBDValue = int(timingAdvanceValue[0])/100
+            self.timingAdvanceOBD = str(timingAdvanceValue[0])
+
+            mafValue = (re.findall('\d+', str(obd_data["maf"])))
+            self.mafOBDValue = int(mafValue[0])/100
+            self.mafOBD = str(mafValue[0])
+
+            self.gear = self.vehicle.get_gear(
+                int(speedValue[0]), int(rpmValue[0]))
+
+        except Exception as uiUpdateError:
+                logging.error(
+                    "An error occurred while attempting to push obd data to the interface.")
+
+    def disable_obd_ui_updates(self):
+        """Disables OBD UI Updating (Saves RPi Resources)"""
+        self.update_ui_thread = False
+
+  
+
+    def basic_popup(self, title, message):
+        box = BoxLayout(orientation="vertical")
+        box2 = BoxLayout(orientation="horizontal")
+        box.add_widget(Label(text=message))
+        box2.add_widget(Button(text='Agree', size_hint = (.4,.4)))
+        box2.add_widget(Button(text='Decline', size_hint = (.4,.4)))
+        box.add_widget(box2)
+        popup = Popup(title=title,
+                            content=box,
+                            size_hint=(None, None), size=(400, 300))
+        popup.open()
+
+    def one_button_popup(self, title, message, button_one_title, button_one_action):
+        pass
+
+    def advanced_popup(self, title, message, button_one_title, button_one_action, button_two_title, button_two_action):
+        box = BoxLayout(orientation="vertical")
+        box2 = BoxLayout(orientation="horizontal")
+        box.add_widget(Label(text='Hello world'))
+        box2.add_widget(Button(text='Hi'))
+        box2.add_widget(Button(text='Cool'))
+        box.add_widget(box2)
+        popup = Popup(title=title,
+                            content=box,
+                            size_hint=(None, None), size=(400, 300))
+        popup.open()
+
+
+
+#######===SCREENS===#######
+
+
+class MyScreenManager(ScreenManager):
+    HomeScreen = ObjectProperty(None)
+    PerformanceHomeScreen = ObjectProperty(None)
+    NavBar = ObjectProperty(None)
+
+
+class HomeScreen(Screen):
+    pass
+
+
+class PerformanceHomeScreen(Screen):
+    pass
+
+
+class SettingsScreen(Screen):
+    pass
+
+###########################
+
+
+class NavBar(FloatLayout):
+    pass
+
+
+class AppDashboard(FloatLayout):
+    pass
+
+
+if __name__ == "__main__":
+    LOG_FILE = datetime.now().strftime('logs/vclog_%H_%M_%S_%d_%m_%Y.log')
+    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG,
+                        format='VehicleConnect: %(message)s')
+    logging.debug("Vehicle Connect")
+    obdUtility = OBDUtility()
+    vehicleConnect = VehicleConnect()
+    vehicleConnect.run()

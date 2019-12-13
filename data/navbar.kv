@@ -1,0 +1,35 @@
+<NavBar>:
+    Widget:
+        pos_hint: {'center_x': 0.5, 'center_y': .07}
+        size_hint: 1, .15
+        canvas:     
+            Color:
+                rgb: (.21, .21, .21)
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        
+    ImageButton:
+        id: home_button
+        pos_hint: {'center_x': 0.2, 'center_y': .07}
+        source: 'data/icons/home.png'
+        size_hint: 0.1, 0.1
+        on_release:
+            app.root.current = 'home-screen'
+
+       
+    ImageButton:
+        id: obd_button
+        pos_hint: {'center_x': 0.5, 'center_y': .07}
+        source:'data/icons/speed.png'
+        size_hint: 0.12, 0.12
+        on_release:
+            app.root.current = 'performance-home-screen'
+       
+       
+    ImageButton:
+        pos_hint: {'center_x': 0.8, 'center_y': .07}
+        source: 'data/icons/settings.png'
+        size_hint: 0.1, 0.1
+        on_release:
+            app.open_settings()
