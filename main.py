@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from math import cos, sin
 import logging
+import platform
 
 import kivy
 import numpy as np
@@ -47,6 +48,7 @@ Config.set('graphics', 'resizable', False)
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
 Window.size = (800, 480)
 ###########################
+
 
 
 class ImageButton(ButtonBehavior, Image):
@@ -158,11 +160,16 @@ class VehicleConnect(App):
             obd_mac_address = self.config.get('OBD', 'obdmacaddress')
 
     def on_start(self):
+        #bind rfcomm1 to bluetooth OBD adapter
+    
+        if developermode == False:
+            obdUtility.set_rfcomm(self.config.get('OBD', 'obdmacaddress'))
+       
 
         # Initialize Vehicle Class
         self.vehicle = Vehicle()
         try:
-            # Initialize Saved Settings
+            #Import Saved Settings
             first_gear = float(self.config.get('Vehicle', 'firstGear'))
             second_gear = float(self.config.get('Vehicle', 'secondGear'))
             third_gear = float(self.config.get('Vehicle', 'thirdGear'))
@@ -184,9 +191,10 @@ class VehicleConnect(App):
         # Generate Gear Data to be used for Gear Calculation
         self.vehicle.generate_gear_data()
 
-        # updates user interface with obd data
+        if developermode == True:
+            self.basic_popup("System", "Developer Mode Has Been Enabled!", "Ok", lambda x: self.close_current_popup())
         
-
+        #obd connection thread
         self.update_obd_data = threading.Thread(target=self.refresh_obd)
         self.update_obd_data.setDaemon(True)
         self.update_obd_data.start()
@@ -194,9 +202,6 @@ class VehicleConnect(App):
         Clock.schedule_interval(lambda x: self.update_obd(), .2)
 
     def refresh_obd(self):
-        # connects to obd port
-        print(self.config.get(
-            'OBD', 'obdport'))
         obdUtility.connect_to_obd(connection=self.config.get(
             'OBD', 'obdport'), obd_mac=obd_mac_address)
 
@@ -261,14 +266,13 @@ class VehicleConnect(App):
         """Disables OBD UI Updating (Saves RPi Resources)"""
         self.update_ui_thread = False
 
-  
-
-    def basic_popup(self, title, message):
+    def basic_popup(self, title, message, button_text, action):
         box = BoxLayout(orientation="vertical")
         box2 = BoxLayout(orientation="horizontal")
         box.add_widget(Label(text=message))
-        box2.add_widget(Button(text='Agree', size_hint = (.4,.4)))
-        box2.add_widget(Button(text='Decline', size_hint = (.4,.4)))
+        btn1 = Button(text=button_text, size_hint = (.4,.4))
+        btn1.bind(on_release=action)
+        box2.add_widget(btn1)
         box.add_widget(box2)
         popup = Popup(title=title,
                             content=box,
@@ -277,6 +281,10 @@ class VehicleConnect(App):
 
     def one_button_popup(self, title, message, button_one_title, button_one_action):
         pass
+    
+    def close_current_popup(self):
+         if isinstance(App.get_running_app().root_window.children[0], Popup):
+            App.get_running_app().root_window.children[0].dismiss()
 
     def advanced_popup(self, title, message, button_one_title, button_one_action, button_two_title, button_two_action):
         box = BoxLayout(orientation="vertical")
@@ -309,8 +317,6 @@ class PerformanceHomeScreen(Screen):
     pass
 
 
-class SettingsScreen(Screen):
-    pass
 
 ###########################
 
@@ -328,6 +334,12 @@ if __name__ == "__main__":
     logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG,
                         format='VehicleConnect: %(message)s')
     logging.debug("Vehicle Connect")
+    
+    if platform.system() == "Windows":
+        developermode=True
+        logging.debug("DEBUG MODE ENABLED FOR WINDOWS ENVIRONMENT")
+    
+    
     obdUtility = OBDUtility()
     vehicleConnect = VehicleConnect()
     vehicleConnect.run()

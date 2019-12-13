@@ -30,16 +30,19 @@ class OBDUtility():
         """Connects to OBD Port"""
         self.port = kwargs["connection"]
         self.obd_mac_address = kwargs["obd_mac"]
-        print("Connecting to port on {0}".format(self.obd_mac_address))
+        logging.debug("Connecting to {0}".format(self.port))
         try:
             self.connection = obd.OBD(kwargs["connection"])
         except:
             logging.debug("Failed to connect to " + kwargs["connection"])
+       
+
+    def set_rfcomm(self, mac_address):
         try:
-            os.system(
-                'sudo rfcomm bind /dev/rfcomm1 %s'.format(self.obd_mac_address))
-        except:
-            logging.debug("Failed to bind OBD Adapter to RFCOMM1")
+            logging.debug("Binding RFCOMM to Mac Address")
+            os.system('sudo rfcomm bind /dev/rfcomm1 %s'.format(mac_address))
+        except Exception as E:
+            logging.critical("Failed to Bind RFCOMM1 to Mac Address: {0}".format(E))
 
     def is_connection_alive(self):
         """Verifies the connection is valid by checking if RPM is active"""
