@@ -14,7 +14,7 @@ obd_json = json.dumps([
       'title': 'OBD Mac Address',
       'desc': 'Adapter Mac Address',
       'section': 'OBD',
-      'key': 'obdmacaddress'},
+      'key': 'obdmacaddress'}
     
       
       

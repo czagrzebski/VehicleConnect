@@ -123,12 +123,12 @@ class VehicleConnect(App):
         if key == "maxRPM":
             self.vehicle.setup_vehicle(max_rpm=self.config.get(
                 'Vehicle', 'maxRPM'))
-        elif key == "obdport":
+        if key == "obdport":
             # change obd port
             obdUtility.connect_to_obd(connection=self.config.get(
-                'OBD', 'obdport'), obd_mac=self.config.get(
-                'OBD', 'obdmacaddress'))
-        elif key == "firstGear" or "secondGear" or "thirdGear" or "fourthGear" or "fifthGear" or "sixthGear":
+                'OBD', 'obdport'))
+
+        if key == "firstGear" or "secondGear" or "thirdGear" or "fourthGear" or "fifthGear" or "sixthGear":
             try:
                 # get gear settings
                 first_gear = float(self.config.get('Vehicle', 'firstGear'))
@@ -138,7 +138,7 @@ class VehicleConnect(App):
                 fifth_gear = float(self.config.get('Vehicle', 'fifthGear'))
                 sixth_gear = float(self.config.get('Vehicle', 'sixthGear'))
 
-                # build list of gears* with gear ratio
+                # build list of gears with gear ratio
                 transmission_ratio_list = {
                     1: first_gear, 2: second_gear, 3: third_gear, 4: fourth_gear, 5: fifth_gear, 6: sixth_gear}
 
@@ -148,16 +148,16 @@ class VehicleConnect(App):
                 self.vehicle.generate_gear_data()
             except:
                 logging.warning("Error while loading the vehicle information")
-        elif key == "axelRatio":
+        if key == "axelRatio":
             axel_ratio = float(self.config.get('Vehicle', 'axelRatio'))
             self.vehicle.setup_vehicle(axel_ratio=axel_ratio)
             self.vehicle.generate_gear_data()
-        elif key == "tireDiamater":
+        if key == "tireDiamater":
             tire_diamater = float(self.config.get('Vehicle', 'tireDiameter'))
             self.vehicle.setup_vehicle(tire_diamater=tire_diamater)
             self.vehicle.generate_gear_data()
-        elif key == "obdmacaddress":
-            obd_mac_address = self.config.get('OBD', 'obdmacaddress')
+        if key == "obdmacaddress":
+            obdUtility.set_rfcomm(self.config.get('OBD', 'obdmacaddress'))
 
     def on_start(self):
         #bind rfcomm1 to bluetooth OBD adapter
