@@ -29,7 +29,7 @@ class OBDUtility():
     def connect_to_obd(self, **kwargs):
         """Connects to OBD Port"""
         self.port = kwargs["connection"]
-        self.obd_mac_address = kwargs["obd_mac"]
+      
         logging.debug("Connecting to {0}".format(self.port))
         try:
             self.connection = obd.OBD(kwargs["connection"])
@@ -55,13 +55,12 @@ class OBDUtility():
     def wait_for_connection(self):
         """Waits for OBD Connection"""
         self.connectionWait = True
-        print("Waiting for Connection on {0}".format(self.port))
+        logging.info("Waiting for Connection on {0}".format(self.port))
 
         while self.connectionWait:
-            self.connect_to_obd(connection=self.port,
-                                obd_mac=self.obd_mac_address)
+            self.connect_to_obd(connection=self.port)
             if self.is_connection_alive():
-                logging.debug("Connection now successful")
+                logging.info("Connection now successful")
                 self.connectionWait = False
                 break
             else:

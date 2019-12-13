@@ -13,7 +13,6 @@ class Gauge(Widget):
     fill_fraction = NumericProperty(.4)
 
     def recalculate_lines(self):
-        print(self.center)
 
         centre_x, centre_y = self.center
 

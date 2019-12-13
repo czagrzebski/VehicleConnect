@@ -6,6 +6,8 @@ from datetime import datetime
 from math import cos, sin
 import logging
 import platform
+import argparse
+
 
 import kivy
 import numpy as np
@@ -157,11 +159,11 @@ class VehicleConnect(App):
             self.vehicle.setup_vehicle(tire_diamater=tire_diamater)
             self.vehicle.generate_gear_data()
         if key == "obdmacaddress":
-            obdUtility.set_rfcomm(self.config.get('OBD', 'obdmacaddress'))
+            athread = threading.Thread(target=obdUtility.set_rfcomm, args=((self.config.get('OBD', 'obdmacaddress'))))
+            athread.start()
 
     def on_start(self):
         #bind rfcomm1 to bluetooth OBD adapter
-    
         if developermode == False:
             obdUtility.set_rfcomm(self.config.get('OBD', 'obdmacaddress'))
        
@@ -194,12 +196,19 @@ class VehicleConnect(App):
         if developermode == True:
             self.basic_popup("System", "Developer Mode Has Been Enabled!", "Ok", lambda x: self.close_current_popup())
         
+        #!!!!!!!!!!
+        #Experimental Version WARNING...REMOVE BEFORE MERGING TO MASTER!!!
+
+        self.basic_popup("System", "This is an experimental build! Expect Bugs", "Ok", lambda x: self.close_current_popup())
+        
+        
         #obd connection thread
         self.update_obd_data = threading.Thread(target=self.refresh_obd)
         self.update_obd_data.setDaemon(True)
         self.update_obd_data.start()
 
-        Clock.schedule_interval(lambda x: self.update_obd(), .2)
+        self.update_ui_obd = False
+        Clock.schedule_interval(lambda x: self.update_obd(), .1)
 
     def refresh_obd(self):
         obdUtility.connect_to_obd(connection=self.config.get(
@@ -214,57 +223,63 @@ class VehicleConnect(App):
     @mainthread
     def update_obd(self):
         try:
-            # Get Dict of fetched OBD Data
-            obd_data = obdUtility.get_obd_data()
-        
-            # Get OBD Values from Returned Dict
-            # Convert Values to Percent (For Gauges)
-            # Set binded StringProperty and NumericProperty values (kivy) to obd data
+            if self.update_ui_obd == True:
+              
+                # Get Dict of fetched OBD Data
+                obd_data = obdUtility.get_obd_data()
+            
+                # Get OBD Values from Returned Dict
+                # Convert Values to Percent (For Gauges)
+                # Set binded StringProperty and NumericProperty values (kivy) to obd data
 
-            speedValue = (re.findall('\d+', str(obd_data["speed"])))
-            self.speedOBDValue = int(speedValue[0])/140
-            self.speedOBD = str(speedValue[0])
+                speedValue = (re.findall('\d+', str(obd_data["speed"])))
+                self.speedOBDValue = int(speedValue[0])/140
+                self.speedOBD = str(speedValue[0])
 
-            rpmValue = (re.findall('\d+', str(obd_data["rpm"])))
-            self.rpmOBDValue = int(rpmValue[0])/int(self.vehicle.max_rpm)
-            self.rpmOBD = str(rpmValue[0])
+                rpmValue = (re.findall('\d+', str(obd_data["rpm"])))
+                self.rpmOBDValue = int(rpmValue[0])/int(self.vehicle.max_rpm)
+                self.rpmOBD = str(rpmValue[0])
 
-            coolantTemperatureValue = (re.findall(
-                '\d+', str(obd_data["coolant_temp"])))
-            self.coolantTemperatureOBDValue = int(
-                coolantTemperatureValue[0])/160
-            self.coolantTemperatureOBD = str(coolantTemperatureValue[0])
+                coolantTemperatureValue = (re.findall(
+                    '\d+', str(obd_data["coolant_temp"])))
+                self.coolantTemperatureOBDValue = int(
+                    coolantTemperatureValue[0])/160
+                self.coolantTemperatureOBD = str(coolantTemperatureValue[0])
 
-            throttlePositionValue = (re.findall(
-                '\d+', str(obd_data["throttle_position"])))
-            self.throttlePositionOBDValue = int(
-                throttlePositionValue[0])/100
-            self.throttlePositionOBD = str(throttlePositionValue[0])
+                throttlePositionValue = (re.findall(
+                    '\d+', str(obd_data["throttle_position"])))
+                self.throttlePositionOBDValue = int(
+                    throttlePositionValue[0])/100
+                self.throttlePositionOBD = str(throttlePositionValue[0])
 
-            intakePressureValue = (re.findall(
-                '\d+', str(obd_data["intake_pressure"])))
-            self.intakePressureOBDValue = int(intakePressureValue[0])/150
-            self.intakePressureOBD = str(intakePressureValue[0])
+                intakePressureValue = (re.findall(
+                    '\d+', str(obd_data["intake_pressure"])))
+                self.intakePressureOBDValue = int(intakePressureValue[0])/150
+                self.intakePressureOBD = str(intakePressureValue[0])
 
-            timingAdvanceValue = (re.findall(
-                '\d+', str(obd_data["timing_advance"])))
-            self.timingAdvanceOBDValue = int(timingAdvanceValue[0])/100
-            self.timingAdvanceOBD = str(timingAdvanceValue[0])
+                timingAdvanceValue = (re.findall(
+                    '\d+', str(obd_data["timing_advance"])))
+                self.timingAdvanceOBDValue = int(timingAdvanceValue[0])/100
+                self.timingAdvanceOBD = str(timingAdvanceValue[0])
 
-            mafValue = (re.findall('\d+', str(obd_data["maf"])))
-            self.mafOBDValue = int(mafValue[0])/100
-            self.mafOBD = str(mafValue[0])
+                mafValue = (re.findall('\d+', str(obd_data["maf"])))
+                self.mafOBDValue = int(mafValue[0])/100
+                self.mafOBD = str(mafValue[0])
 
-            self.gear = self.vehicle.get_gear(
-                int(speedValue[0]), int(rpmValue[0]))
+                self.gear = self.vehicle.get_gear(
+                    int(speedValue[0]), int(rpmValue[0]))
 
         except Exception as uiUpdateError:
                 logging.error(
                     "An error occurred while attempting to push obd data to the interface.")
 
+    def enable_obd_ui_updates(self):
+        """Enables OBD UI Updating"""
+        self.update_ui_obd = True
+
     def disable_obd_ui_updates(self):
         """Disables OBD UI Updating (Saves RPi Resources)"""
-        self.update_ui_thread = False
+        self.update_ui_obd = False
 
     def basic_popup(self, title, message, button_text, action):
         box = BoxLayout(orientation="vertical")
@@ -276,7 +291,7 @@ class VehicleConnect(App):
         box.add_widget(box2)
         popup = Popup(title=title,
                             content=box,
-                            size_hint=(None, None), size=(400, 300))
+                            size_hint=(None, None), size=(350, 240))
         popup.open()
 
     def one_button_popup(self, title, message, button_one_title, button_one_action):
@@ -339,7 +354,7 @@ if __name__ == "__main__":
         developermode=True
         logging.debug("DEBUG MODE ENABLED FOR WINDOWS ENVIRONMENT")
     
-    
+ 
     obdUtility = OBDUtility()
     vehicleConnect = VehicleConnect()
     vehicleConnect.run()

@@ -92,7 +92,7 @@ vehicle_json = json.dumps([
       'title': 'Max RPM',
       'desc': 'Maximimum RPM',
       'section': 'Vehicle',
-      'key': 'maxRPM'}
+      'key': 'maxRPM'},
 
       
       ])
