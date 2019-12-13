@@ -224,7 +224,6 @@ class VehicleConnect(App):
     def update_obd(self):
         try:
             if self.update_ui_obd == True:
-              
                 # Get Dict of fetched OBD Data
                 obd_data = obdUtility.get_obd_data()
             
@@ -266,12 +265,17 @@ class VehicleConnect(App):
                 self.mafOBDValue = int(mafValue[0])/100
                 self.mafOBD = str(mafValue[0])
 
+
+             
                 self.gear = self.vehicle.get_gear(
                     int(speedValue[0]), int(rpmValue[0]))
 
+
+                
+
         except Exception as uiUpdateError:
                 logging.error(
-                    "An error occurred while attempting to push obd data to the interface.")
+                    "An error occurred while attempting to push obd data to the interface: {0}".format(uiUpdateError))
 
     def enable_obd_ui_updates(self):
         """Enables OBD UI Updating"""

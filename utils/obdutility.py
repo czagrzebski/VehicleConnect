@@ -24,7 +24,7 @@ class OBDUtility():
         self.connectionWait = False
         self.port = None
         self.obdData = {"speed": '0', "rpm": '0', "coolant_temp": '0',
-                        "throttle_position": '0', "intake_pressure": '0', "timing_advance": '0', "maf": '0'}
+                        "throttle_position": '0', "intake_pressure": '0', "timing_advance": '0', "maf": '0', "fuelLevel": '0'}
 
     def connect_to_obd(self, **kwargs):
         """Connects to OBD Port"""
@@ -65,7 +65,7 @@ class OBDUtility():
                 break
             else:
                 self.obdData = {"speed": '0', "rpm": '0', "coolant_temp": '0',
-                                "throttle_position": '0', "intake_pressure": '0', "timing_advance": '0', "maf": '0'}
+                                "throttle_position": '0', "intake_pressure": '0', "timing_advance": '0', "maf": '0', "fuelLevel": '0'}
                 time.sleep(3)
 
     def get_obd_data(self):
@@ -139,8 +139,14 @@ class OBDUtility():
                 else:
                     maf = '0'
 
+                if self.connection.supports(obd.commands.FUEL_LEVEL):
+                    fuelResponse = self.connection.query(obd.commands.FUEL_LEVEL)
+                    fuelLevel = fuelResponse.value
+                else:
+                    fuelLevel = '0'
+
                 self.obdData = {"speed": speed, "rpm": rpm, "coolant_temp": coolantTemperature, "throttle_position": throttlePosition,
-                                "intake_pressure": intakePressure, "timing_advance": timingAdvance, "maf": maf}
+                                "intake_pressure": intakePressure, "timing_advance": timingAdvance, "maf": maf, "fuelLevel": fuelLevel}
                 return self.obdData
             except Exception as E:
                 logging.debug(E)
