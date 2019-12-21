@@ -71,6 +71,17 @@ class OBDUtility():
     def get_obd_data(self):
         return self.obdData
 
+    def get_diagnostic_codes(self):
+        if self.connection is not None:
+            try:
+                data = self.connection.query(obd.commands.GET_DTC).value
+                return data
+            except:
+                logging.critical("Failed to retrieve DTC Codes")
+                return data
+            
+
+
     def refresh_obd_data(self):
         """Returns Dictionary of OBD Data. Gets OBD Data (Speed, RPM, Coolant Temperature, Throttle Position, Intake Pressure, and Mass Air Flow) from OBD Port"""
         # NOTE: GEAR INFORMATION IS NOT AVAILABLE FROM OBD, thus its not included in this class. Gear is a calculated value, and can

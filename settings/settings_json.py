@@ -24,7 +24,7 @@ vehicle_json = json.dumps([
 
       
       {'type': 'title',
-      'title': 'Gear Setup'},
+      'title': 'Gear Setup (Gears with 0 will be avoided)'},
       
       {'type': 'string',
       'title': 'First Gear',

@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from math import cos, sin
 import logging
+import traceback
 import platform
 import argparse
 
@@ -201,6 +202,7 @@ class VehicleConnect(App):
 
         self.basic_popup("System", "This is an experimental build! Expect Bugs", "Ok", lambda x: self.close_current_popup())
         
+        self.current_dtc_codes = {}
         
         #obd connection thread
         self.update_obd_data = threading.Thread(target=self.refresh_obd)
@@ -208,7 +210,24 @@ class VehicleConnect(App):
         self.update_obd_data.start()
 
         self.update_ui_obd = False
+        #update obd data
         Clock.schedule_interval(lambda x: self.update_obd(), .1)
+
+        #check for diagnostics
+        check_diagnostic_codes_thread = threading.Thread(target=self.check_for_diagnostics)
+        check_diagnostic_codes_thread.setDaemon(False)
+        check_diagnostic_codes_thread.start()
+        
+
+    def check_for_diagnostics(self):
+            diagnostic_codes = obdUtility.get_diagnostic_codes()
+            if diagnostic_codes is not None:
+                for dtc in diagnostic_codes:
+                    if dtc[0] not in self.current_dtc_codes:
+                        logging.info("Found check engine code {0}".format(dtc[0]))
+                        code = {dtc}
+                        self.current_dtc_codes.update(code)
+                        self.basic_popup("Alert", "{0}\n{1}".format(dtc[0], dtc[1]), "Ok", lambda x: self.close_current_popup())
 
     def refresh_obd(self):
         obdUtility.connect_to_obd(connection=self.config.get(
@@ -217,6 +236,7 @@ class VehicleConnect(App):
         # constantly refreshes obd data
         while True:
             obdUtility.refresh_obd_data()
+            self.check_for_diagnostics()
             time.sleep(.2)
 
     
@@ -227,6 +247,7 @@ class VehicleConnect(App):
                 # Get Dict of fetched OBD Data
                 obd_data = obdUtility.get_obd_data()
             
+               
                 # Get OBD Values from Returned Dict
                 # Convert Values to Percent (For Gauges)
                 # Set binded StringProperty and NumericProperty values (kivy) to obd data
@@ -276,6 +297,7 @@ class VehicleConnect(App):
         except Exception as uiUpdateError:
                 logging.error(
                     "An error occurred while attempting to push obd data to the interface: {0}".format(uiUpdateError))
+                traceback.print_exc()
 
     def enable_obd_ui_updates(self):
         """Enables OBD UI Updating"""
@@ -285,17 +307,16 @@ class VehicleConnect(App):
         """Disables OBD UI Updating (Saves RPi Resources)"""
         self.update_ui_obd = False
 
+    @mainthread
     def basic_popup(self, title, message, button_text, action):
         box = BoxLayout(orientation="vertical")
-        box2 = BoxLayout(orientation="horizontal")
-        box.add_widget(Label(text=message))
-        btn1 = Button(text=button_text, size_hint = (.4,.4))
+        box.add_widget(Label(text="{0}".format(message), pos_hint={'center_y': .5}))
+        btn1 = Button(text=button_text, size_hint = (1,.3))
         btn1.bind(on_release=action)
-        box2.add_widget(btn1)
-        box.add_widget(box2)
+        box.add_widget(btn1)
         popup = Popup(title=title,
                             content=box,
-                            size_hint=(None, None), size=(350, 240))
+                            size_hint=(None, None), size=(380, 240))
         popup.open()
 
     def one_button_popup(self, title, message, button_one_title, button_one_action):
