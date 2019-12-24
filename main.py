@@ -8,6 +8,12 @@ import logging
 import traceback
 import platform
 import argparse
+from kivymd.uix.bottomnavigation import MDBottomNavigation
+from kivymd.uix.bottomnavigation import MDBottomNavigationBar
+from kivymd.uix.bottomnavigation import MDBottomNavigationHeader
+from kivymd.uix.bottomnavigation import MDBottomNavigationItem
+from kivymd.uix.label import MDLabel
+from kivymd.theming import ThemeManager
 
 
 import kivy
@@ -37,6 +43,7 @@ from utils.obdutility import OBDUtility
 from utils.vehicle import Vehicle
 from settings.settings_json import obd_json, vehicle_json
 from utils.gauges import Gauge, GaugeSmall
+from kivymd.app import MDApp
 
 global developermode
 developermode = False
@@ -58,7 +65,7 @@ class ImageButton(ButtonBehavior, Image):
     pass
 
 
-class VehicleConnect(App):
+class VehicleConnect(MDApp):
 
     ###########===Kivy Binded Variables==##################
     speedOBD = StringProperty('0')
@@ -86,12 +93,15 @@ class VehicleConnect(App):
 
     obdStatus = StringProperty('0')
 
+
     #######################################################
 
     def build(self):
         self.settings_cls = SettingsWithSidebar
-        main = Builder.load_file("data/main.kv")
-        sm = MyScreenManager()
+        main = Builder.load_file("data/main_ui.kv")
+        theme_cls = ThemeManager()
+        self.theme_cls.theme_style = "Dark"
+        self.sm = MyScreenManager()
         return main
 
     def build_config(self, config):
@@ -246,6 +256,7 @@ class VehicleConnect(App):
             if self.update_ui_obd == True:
                 # Get Dict of fetched OBD Data
                 obd_data = obdUtility.get_obd_data()
+                
             
                
                 # Get OBD Values from Returned Dict
@@ -303,6 +314,9 @@ class VehicleConnect(App):
         """Enables OBD UI Updating"""
         self.update_ui_obd = True
 
+    def change_screen(self):
+        pass
+
     def disable_obd_ui_updates(self):
         """Disables OBD UI Updating (Saves RPi Resources)"""
         self.update_ui_obd = False
@@ -350,7 +364,11 @@ class MyScreenManager(ScreenManager):
 
 
 class HomeScreen(Screen):
-    pass
+  
+
+    
+    def print_test(self):
+        print("hithere")
 
 
 class PerformanceHomeScreen(Screen):

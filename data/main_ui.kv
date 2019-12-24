@@ -1,0 +1,284 @@
+#:import NoTransition kivy.uix.screenmanager.NoTransition
+#:include 'data/navbar.kv'
+
+MyScreenManager:
+    id: coolbeans
+    transition: NoTransition()
+    HomeScreen:
+        id: home
+  
+
+
+
+
+
+<Gauge>:
+    on_size: self.recalculate_lines()
+    on_pos: self.recalculate_lines()
+    on_fill_fraction: self.recalculate_lines()
+    canvas:
+        Color:
+            rgba: 0.016, 0.141, 0.141, 1
+        Line:
+            points: self.line_points
+            width: self.height * 0.03
+        Color:
+            rgba: 0.768, 0.039, 0, 1
+        Line:
+            points: self.filled_in_points
+            width: self.height * 0.03
+
+<NotificationPopup>:
+    Label: 
+        text: "yee"
+        size_hint: 0.6, 0.2
+        pos_hint: {"x":0.2, "top":1}
+    Button:
+        text: "You pressed the button"
+        size_hint: 0.8, 0.2
+        pos_hint: {"x":0.1, "y":0.1}
+
+<GaugeSmall>:
+    on_size: self.recalculate_lines()
+    on_pos: self.recalculate_lines()
+    on_fill_fraction: self.recalculate_lines()
+    canvas:
+        Color:
+            rgba: 0.016, 0.141, 0.141, 1
+        Line:
+            points: self.line_points
+            width: self.height * 0.03
+        Color:
+            rgba: 0.768, 0.039, 0, 1
+        Line:
+            points: self.filled_in_points
+            width: self.height * 0.03
+
+
+ 
+<HomeScreen>:
+    name: 'hometest'
+  
+        
+    FloatLayout:
+        MDBottomNavigation:
+            id: panel
+            panel_color: [0.2980392156862745, 0.2823529411764706, 0.32941176470588235, 1] 
+
+            
+        
+       
+
+            MDBottomNavigationItem:
+                name: "home"
+                text: "Home"
+                icon: "home-circle"
+                
+                FloatLayout: 
+                    GridLayout:   
+                        cols: 4    
+                        row_force_default:True
+                        row_default_height:150
+                        col_default_width:150
+                        col_force_default:True
+                        spacing: 40, 40
+                        pos_hint: {'center_x': 0.11, 'center_y': .81}
+                        size_hint: (None, None)
+                        size_hint_y: None
+                        #performance app
+                        Button:
+                            id: performance-app-dashboard
+                            background_color:(0.9, 0.9, 0.9, 0.0)
+                            text: "\n\n\n\n\n\n\nPerformance"
+                            font_size: 18
+                            on_release:
+                                performance_2.dispatch("on_tab_press")
+                
+                            
+                                
+                            Image:
+                                source: 'data/icons/performance_app.png'
+                                center_x: self.parent.center_x
+                                center_y: self.parent.center_y
+                                size: 120, 120
+                                allow_stretch: True
+
+                        Button:
+                            id: maintenance-app-dashboard
+                            background_color:(0.9, 0.9, 0.9, 0.0)
+                            text: "\n\n\n\n\n\n\nMaintainence"
+                            font_size: 18
+                            on_release:   
+                                app.basic_popup("Feature Not Available", "This feature will be released in later builds", "Ok", lambda x: app.close_current_popup())
+                            Image:
+                                source: 'data/icons/maintenance_app.png'
+                                center_x: self.parent.center_x
+                                center_y: self.parent.center_y
+                                size: 120, 120
+                                allow_stretch: True
+                        Button:
+                            id: garage-app-dashboard
+                            background_color:(0.9, 0.9, 0.9, 0.0)
+                            text: "\n\n\n\n\n\n\nMy Garage"
+                            font_size: 18
+                            on_release:   
+                                app.basic_popup("Feature Not Available", "This feature will be released in later builds", "Ok", lambda x: app.close_current_popup())
+                            Image:
+                                source: 'data/icons/garage_app.png'
+                                center_x: self.parent.center_x
+                                center_y: self.parent.center_y
+                                size: 120, 120
+                                allow_stretch: True
+                        #settings app
+                        Button:
+                            id: settings-app-dashboard
+                            background_color:(0.9, 0.9, 0.9, 0.0)
+                            text: "\n\n\n\n\n\n\nSettings"
+                            font_size: 18
+                            on_release:   
+                                app.open_settings()
+                            Image:
+                                source: 'data/icons/settings_app.png'
+                                center_x: self.parent.center_x
+                                center_y: self.parent.center_y
+                                size: 120, 120
+                                allow_stretch: True
+
+                
+
+            MDBottomNavigationItem:
+                name: "performance"
+                id: performance_2
+                text: "Performance"
+                icon: "engine"
+                on_enter:
+                    app.enable_obd_ui_updates()
+                on_leave:
+                    app.disable_obd_ui_updates()
+             
+
+                RelativeLayout:
+                    GaugeSmall:
+                        fill_fraction: app.mafOBDValue
+                        pos_hint: {'center_x': 0.9, 'center_y': 0.77}
+                        size_hint: 0.3, 0.3
+                    Label:
+                        text: app.mafOBD
+                        pos_hint: {'center_x': 0.9, 'center_y': 0.77}
+                        font_size: dp(20)
+                    Label:
+                        text: "MAF"
+                        pos_hint: {'center_x': 0.9, 'center_y': 0.61}
+                        
+
+                #Timing Advance
+                RelativeLayout:
+                    GaugeSmall:
+                        fill_fraction: app.timingAdvanceOBDValue
+                        pos_hint: {'center_x': 0.7, 'center_y': 0.77}
+                        size_hint: 0.3, 0.3
+                    Label:
+                        text: app.timingAdvanceOBD
+                        pos_hint: {'center_x': 0.7, 'center_y': 0.77}
+                        font_size: dp(20)
+                    Label:
+                        text: "Timing"
+                        pos_hint: {'center_x': 0.7, 'center_y': 0.61}
+                        font_size: dp(15)
+                
+                #Throttle
+                RelativeLayout:
+                    GaugeSmall:
+                        fill_fraction: app.throttlePositionOBDValue
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.77}
+                        size_hint: 0.3, 0.3
+                    Label:
+                        text: app.throttlePositionOBD
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.77}
+                        font_size: dp(20)
+                    Label:
+                        text: "Throttle"
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.61}
+                        font_size: dp(15)
+
+                    #Air Intake
+                    RelativeLayout:
+                        GaugeSmall:
+                            fill_fraction: app.intakePressureOBDValue
+                            pos_hint: {'center_x': 0.3, 'center_y': 0.77}
+                            size_hint: 0.3, 0.3
+                        Label:
+                            text: app.intakePressureOBD
+                            pos_hint: {'center_x': 0.3, 'center_y': 0.77}
+                            font_size: dp(20)
+                        Label:
+                            text: "Air Intake"
+                            pos_hint: {'center_x': 0.3, 'center_y': 0.61}
+                            font_size: dp(15)
+
+                    #Coolant Temperature
+                    RelativeLayout:
+                        GaugeSmall:
+                            fill_fraction: app.coolantTemperatureOBDValue
+                            pos_hint: {'center_x': 0.1, 'center_y': 0.77}
+                            size_hint: 0.3, 0.3
+                        Label:
+                            text: app.coolantTemperatureOBD
+                            pos_hint: {'center_x': 0.1, 'center_y': 0.77}
+                            font_size: dp(20)
+                        Label:
+                            text: "Coolant \N{DEGREE SIGN}C"
+                            pos_hint: {'center_x': 0.1, 'center_y': 0.61}
+                            font_size: dp(15)
+                    
+                #RPM Gauge
+                RelativeLayout:
+                    Gauge:
+                        fill_fraction: app.rpmOBDValue
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.29}
+                        size_hint: 0.5, 0.5
+                    Label:
+                        text: app.rpmOBD
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.29}
+                        font_size: dp(60)
+                    Label:
+                        text: "RPM"
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.14}
+                        font_size: dp(20)
+
+                #Speed
+                Label:
+                    text: "MPH"
+                    pos_hint: {'center_x': 0.2, 'center_y': 0.4}
+                    font_size: dp(20)
+                Label:
+                    text: app.speedOBD
+                    pos_hint: {'center_x': 0.2, 'center_y': 0.25}
+                    font_size: dp(60)
+                    
+                #GEAR
+                Label:
+                    text: "GEAR"
+                    pos_hint: {'center_x': 0.8, 'center_y': 0.4}
+                    font_size: dp(20)
+                Label:
+                    text: app.gear
+                    pos_hint: {'center_x': 0.8, 'center_y': 0.25}
+                    font_size: dp(60)
+            
+            MDBottomNavigationItem:
+                name: "files2"
+                text: "Settings"
+                icon: "settings-box"
+                on_enter:
+                    app.open_settings()
+
+      
+
+       
+           
+
+      
+ 
+
+         
