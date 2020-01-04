@@ -7,21 +7,25 @@ from math import cos, sin
 import logging
 import traceback
 import platform
-import argparse
-from kivymd.uix.bottomnavigation import MDBottomNavigation
-from kivymd.uix.bottomnavigation import MDBottomNavigationBar
-from kivymd.uix.bottomnavigation import MDBottomNavigationHeader
-from kivymd.uix.bottomnavigation import MDBottomNavigationItem
-from kivymd.uix.label import MDLabel
-from kivymd.theming import ThemeManager
-
-
-import kivy
 import numpy as np
 import obd
+
+import kivy
 from kivy.app import App
-from kivy.clock import Clock, mainthread
 from kivy.config import Config
+
+#config must stay in this position in order for kivy to recognize the configuration
+
+########KIVY CONFIGURATION########
+Config.set('graphics', 'width', '800')
+Config.set('graphics', 'height', '480')
+Config.set('graphics', 'resizable', False)
+Config.set('graphics', 'borderless', '0')
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
+###################################
+
+
+from kivy.clock import Clock, mainthread
 from kivy.lang import Builder
 from kivy.properties import (ListProperty, NumericProperty, ObjectProperty,
                              StringProperty)
@@ -39,11 +43,23 @@ from kivy.uix.popup import Popup
 from kivy.uix.settings import SettingsWithSidebar
 from kivy.core.window import Window
 
+from kivymd.app import MDApp
+from kivymd.uix.bottomnavigation import MDBottomNavigation
+from kivymd.uix.bottomnavigation import MDBottomNavigationBar
+from kivymd.uix.bottomnavigation import MDBottomNavigationHeader
+from kivymd.uix.bottomnavigation import MDBottomNavigationItem
+from kivymd.uix.label import MDLabel
+from kivymd.theming import ThemeManager
+
+
+
 from utils.obdutility import OBDUtility
 from utils.vehicle import Vehicle
 from settings.settings_json import obd_json, vehicle_json
 from utils.gauges import Gauge, GaugeSmall
-from kivymd.app import MDApp
+
+
+
 
 global developermode
 developermode = False
@@ -52,10 +68,7 @@ global obd_mac_address
 obd_mac_address = "8C:DE:52:C4:E5:84"
 
 ####===Configuration===####
-Config.set('graphics', 'width', '800')
-Config.set('graphics', 'height', '480')
-Config.set('graphics', 'resizable', False)
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
+
 Window.size = (800, 480)
 ###########################
 
@@ -219,14 +232,14 @@ class VehicleConnect(MDApp):
         self.update_obd_data.setDaemon(True)
         self.update_obd_data.start()
 
+        #disable obd ui gauge updates on start
         self.update_ui_obd = False
-        #update obd data
+
+
+        #update obd data 
         Clock.schedule_interval(lambda x: self.update_obd(), .1)
 
-        #check for diagnostics
-        check_diagnostic_codes_thread = threading.Thread(target=self.check_for_diagnostics)
-        check_diagnostic_codes_thread.setDaemon(False)
-        check_diagnostic_codes_thread.start()
+        
         
 
     def check_for_diagnostics(self):
@@ -242,12 +255,13 @@ class VehicleConnect(MDApp):
     def refresh_obd(self):
         obdUtility.connect_to_obd(connection=self.config.get(
             'OBD', 'obdport'), obd_mac=obd_mac_address)
-
-        # constantly refreshes obd data
+      
         while True:
             obdUtility.refresh_obd_data()
             self.check_for_diagnostics()
-            time.sleep(.2)
+            time.sleep(.1)
+            
+               
 
     
     @mainthread
@@ -257,7 +271,6 @@ class VehicleConnect(MDApp):
                 # Get Dict of fetched OBD Data
                 obd_data = obdUtility.get_obd_data()
                 
-            
                
                 # Get OBD Values from Returned Dict
                 # Convert Values to Percent (For Gauges)
@@ -300,10 +313,7 @@ class VehicleConnect(MDApp):
 
              
                 self.gear = self.vehicle.get_gear(
-                    int(speedValue[0]), int(rpmValue[0]))
-
-
-                
+                    int(speedValue[0]), int(rpmValue[0])) 
 
         except Exception as uiUpdateError:
                 logging.error(
