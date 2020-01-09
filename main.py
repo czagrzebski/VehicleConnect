@@ -44,11 +44,17 @@ from kivy.uix.settings import SettingsWithSidebar
 from kivy.core.window import Window
 
 from kivymd.app import MDApp
+from kivymd.uix.toolbar import MDToolbar
+from kivymd.uix.navigationdrawer import NavigationDrawerContentError
+from kivymd.uix.navigationdrawer import MDNavigationDrawer
 from kivymd.uix.bottomnavigation import MDBottomNavigation
 from kivymd.uix.bottomnavigation import MDBottomNavigationBar
 from kivymd.uix.bottomnavigation import MDBottomNavigationHeader
 from kivymd.uix.bottomnavigation import MDBottomNavigationItem
 from kivymd.uix.label import MDLabel
+from kivymd.uix.selectioncontrol import MDCheckbox
+from kivymd.uix.list import IRightBodyTouch, ILeftBody
+from kivymd.uix.list import OneLineAvatarListItem
 from kivymd.theming import ThemeManager
 
 
@@ -110,7 +116,7 @@ class VehicleConnect(MDApp):
     #######################################################
 
     def build(self):
-        self.settings_cls = SettingsWithSidebar
+        self.** = SettingsWithSidebar
         main = Builder.load_file("data/main_ui.kv")
         theme_cls = ThemeManager()
         self.theme_cls.theme_style = "Dark"
@@ -145,6 +151,7 @@ class VehicleConnect(MDApp):
         # Vehicle Panel
         settings.add_json_panel('Vehicle', self.config, data=vehicle_json)
 
+    
     def on_config_change(self, config, section, key, value):
         if key == "maxRPM":
             self.vehicle.setup_vehicle(max_rpm=self.config.get(
@@ -218,12 +225,14 @@ class VehicleConnect(MDApp):
         self.vehicle.generate_gear_data()
 
         if developermode == True:
-            self.basic_popup("System", "Developer Mode Has Been Enabled!", "Ok", lambda x: self.close_current_popup())
+            #self.basic_popup("System", "Developer Mode Has Been Enabled!", "Ok", lambda x: self.close_current_popup())
+            pass
+        
         
         #!!!!!!!!!!
         #Experimental Version WARNING...REMOVE BEFORE MERGING TO MASTER!!!
 
-        self.basic_popup("System", "This is an experimental build! Expect Bugs", "Ok", lambda x: self.close_current_popup())
+        #self.basic_popup("System", "This is an experimental build! Expect Bugs", "Ok", lambda x: self.close_current_popup())
         
         self.current_dtc_codes = {}
         
@@ -268,14 +277,17 @@ class VehicleConnect(MDApp):
     def update_obd(self):
         try:
             if self.update_ui_obd == True:
+                start_time = time.time()
                 # Get Dict of fetched OBD Data
                 obd_data = obdUtility.get_obd_data()
                 
+                print(obd_data["speed"])
                
                 # Get OBD Values from Returned Dict
                 # Convert Values to Percent (For Gauges)
                 # Set binded StringProperty and NumericProperty values (kivy) to obd data
 
+                #speedValue = obd_data["speed"](" ")
                 speedValue = (re.findall('\d+', str(obd_data["speed"])))
                 self.speedOBDValue = int(speedValue[0])/140
                 self.speedOBD = str(speedValue[0])
@@ -284,10 +296,8 @@ class VehicleConnect(MDApp):
                 self.rpmOBDValue = int(rpmValue[0])/int(self.vehicle.max_rpm)
                 self.rpmOBD = str(rpmValue[0])
 
-                coolantTemperatureValue = (re.findall(
-                    '\d+', str(obd_data["coolant_temp"])))
-                self.coolantTemperatureOBDValue = int(
-                    coolantTemperatureValue[0])/160
+                coolantTemperatureValue = (re.findall('\d+', str(obd_data["coolant_temp"])))
+                self.coolantTemperatureOBDValue = int(coolantTemperatureValue[0])/160
                 self.coolantTemperatureOBD = str(coolantTemperatureValue[0])
 
                 throttlePositionValue = (re.findall(
@@ -309,11 +319,11 @@ class VehicleConnect(MDApp):
                 mafValue = (re.findall('\d+', str(obd_data["maf"])))
                 self.mafOBDValue = int(mafValue[0])/100
                 self.mafOBD = str(mafValue[0])
-
-
              
                 self.gear = self.vehicle.get_gear(
                     int(speedValue[0]), int(rpmValue[0])) 
+
+                print("--- %s seconds ---" % (time.time() - start_time))
 
         except Exception as uiUpdateError:
                 logging.error(
@@ -374,27 +384,21 @@ class MyScreenManager(ScreenManager):
 
 
 class HomeScreen(Screen):
-  
-
-    
-    def print_test(self):
-        print("hithere")
-
+    pass
 
 class PerformanceHomeScreen(Screen):
     pass
 
 
-
 ###########################
-
-
-class NavBar(FloatLayout):
-    pass
 
 
 class AppDashboard(FloatLayout):
     pass
+
+
+class NavigationItem(OneLineAvatarListItem):
+    icon = StringProperty()
 
 
 if __name__ == "__main__":

@@ -1,15 +1,20 @@
 #:import NoTransition kivy.uix.screenmanager.NoTransition
+#:import IconLeftWidget kivymd.uix.list.IconLeftWidget
+#:import images_path kivymd.images_path
 #:include 'data/navbar.kv'
 
 MyScreenManager:
-    id: coolbeans
+    id: screenmanage
     transition: NoTransition()
     HomeScreen:
         id: home
-  
 
+<NavigationItem>:
+    theme_text_color: 'Primary'
+    divider: None
 
-
+    IconLeftWidget:
+        icon: root.icon
 
 
 <Gauge>:
@@ -27,16 +32,6 @@ MyScreenManager:
         Line:
             points: self.filled_in_points
             width: self.height * 0.03
-
-<NotificationPopup>:
-    Label: 
-        text: "yee"
-        size_hint: 0.6, 0.2
-        pos_hint: {"x":0.2, "top":1}
-    Button:
-        text: "You pressed the button"
-        size_hint: 0.8, 0.2
-        pos_hint: {"x":0.1, "y":0.1}
 
 <GaugeSmall>:
     on_size: self.recalculate_lines()
@@ -58,6 +53,7 @@ MyScreenManager:
  
 <HomeScreen>:
     name: 'hometest'
+    id: home
   
         
     FloatLayout:
@@ -267,12 +263,112 @@ MyScreenManager:
                     font_size: dp(60)
             
             MDBottomNavigationItem:
-                name: "files2"
+                name: "settings"
+                id: settings
                 text: "Settings"
                 icon: "settings-box"
-                on_enter:
-                    app.open_settings()
 
+                NavigationLayout:
+
+                    ScreenManager:
+                        id: settings_sm
+                        transition: NoTransition()
+
+                        Screen:
+                            name: "general_settings_screen"
+                            AnchorLayout:
+                                anchor_x: 'center'
+                                anchor_y: 'top'
+                                MDToolbar:
+                                    title: "Settings"
+                                    md_bg_color: app.theme_cls.primary_color
+                                    elevation: 5
+                                    left_action_items: [['menu', lambda x: settings_panel.toggle_nav_drawer()]]
+                                
+                                FloatLayout:
+                                    Button:
+                                        text: "Temporary Settings"
+                                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                        size_hint: .2,.2
+                                        on_press:
+                                            app.open_settings()
+
+                        Screen:
+                            name: "obd_settings_screen"
+                            AnchorLayout:
+                                anchor_x: 'center'
+                                anchor_y: 'top'
+                                MDToolbar:
+                                    title: "Settings > OBD"
+                                    md_bg_color: app.theme_cls.primary_color
+                                    elevation: 5
+                                    left_action_items: [['menu', lambda x: settings_panel.toggle_nav_drawer()]]
+                                
+                                FloatLayout:
+                                    Button:
+                                        text: "OBD"
+                                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                        size_hint: .2,.2
+                                        on_press:
+                                            root.ids.settings_sm.current = 'obd_settings_screen'
+                                            
+
+                        
+                    MDNavigationDrawer:
+                        id: settings_panel
+                        
+                        BoxLayout:
+                            orientation: 'vertical'
+
+                          
+                            FloatLayout:
+                                size_hint_y: None
+                                height: "60dp"
+
+                            MDIconButton:
+                                icon: "close"
+                                x: root.parent.x + dp(10)
+                                pos_hint: {"top": .8}
+                                on_release: root.ids.settings_sm.toggle_nav_drawer()
+
+
+                            ScrollView:
+                                pos_hint: {"top": 1}
+
+                                GridLayout:
+                                    id: box_item
+                                    cols: 1
+                                    size_hint_y: None
+                                    height: self.minimum_height
+                                    NavigationItem:
+                                        icon: 'tune'
+                                        id: general_settings
+                                        text: "General"
+                                        on_press:
+                                            root.ids.settings_sm.current = 'general_settings_screen'
+                                            settings_panel.toggle_nav_drawer()
+                                    NavigationItem:
+                                        icon: 'router-wireless'
+                                        id: obd_settings
+                                        text: "OBD"
+                                        on_press:
+                                            root.ids.settings_sm.current = 'obd_settings_screen'
+                                            settings_panel.toggle_nav_drawer()
+                                    NavigationItem:
+                                        icon: 'car-estate'
+                                        id: obd_settings
+                                        text: "Vehicle"
+                                        
+                                        
+                                    
+
+                              
+    
+                               
+                        
+                                
+
+            
       
 
        
