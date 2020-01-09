@@ -1,1 +1,18 @@
-{"vehicle": {"max_rpm": 4000}}
+{
+  "vehicle": {
+    "max_rpm": 4000,
+    "max_speed": 100,
+    "number_of_gears": 6,
+    "gears": []
+  },
+
+  "units": {
+    "speed": "MPH"
+  },
+
+  "OBD": {
+    "port": "COM3",
+    "mac_address": "8C:DE:52:C4:E5:84"
+
+  }
+}

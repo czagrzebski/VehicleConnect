@@ -9,6 +9,7 @@ import traceback
 import platform
 import numpy as np
 import obd
+from settings.settingsmanager import SettingsManager
 
 import kivy
 from kivy.app import App
@@ -116,7 +117,7 @@ class VehicleConnect(MDApp):
     #######################################################
 
     def build(self):
-        self.** = SettingsWithSidebar
+        self.settings_cls = SettingsWithSidebar
         main = Builder.load_file("data/main_ui.kv")
         theme_cls = ThemeManager()
         self.theme_cls.theme_style = "Dark"
@@ -193,7 +194,20 @@ class VehicleConnect(MDApp):
             athread = threading.Thread(target=obdUtility.set_rfcomm, args=((self.config.get('OBD', 'obdmacaddress'))))
             athread.start()
 
+    def populate_setting_options(self):
+        #populate general
+        #populate vehicle
+        #populate
+        pass
+
+    def on_setting_change(self, section, key, value):
+        self.settings.set_setting(section, key, value)
+
     def on_start(self):
+
+        self.settings = SettingsManager()
+        self.settings.read_config()
+
         #bind rfcomm1 to bluetooth OBD adapter
         if developermode == False:
             obdUtility.set_rfcomm(self.config.get('OBD', 'obdmacaddress'))
