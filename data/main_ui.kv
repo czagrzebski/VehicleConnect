@@ -140,6 +140,13 @@ MyScreenManager:
                                 size: 120, 120
                                 allow_stretch: True
 
+
+            
+
+                    
+                                   
+                
+               
                 
 
             MDBottomNavigationItem:
@@ -291,7 +298,7 @@ MyScreenManager:
                                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                                         size_hint: .2,.2
                                         on_press:
-                                            app.open_settings()
+                                            app.show_example_input_dialog()
 
                         Screen:
                             name: "obd_settings_screen"
@@ -311,9 +318,7 @@ MyScreenManager:
                                         size_hint: .2,.2
                                         on_press:
                                             root.ids.settings_sm.current = 'obd_settings_screen'
-                                            
-
-                        
+                                                  
                     MDNavigationDrawer:
                         id: settings_panel
                         
@@ -329,7 +334,7 @@ MyScreenManager:
                                 icon: "close"
                                 x: root.parent.x + dp(10)
                                 pos_hint: {"top": .8}
-                                on_release: root.ids.settings_sm.toggle_nav_drawer()
+                                on_release: settings_panel.toggle_nav_drawer()
 
 
                             ScrollView:
@@ -358,8 +363,10 @@ MyScreenManager:
                                         icon: 'car-estate'
                                         id: obd_settings
                                         text: "Vehicle"
+           
+                    
                                         
-                                        
+        
                                     
 
                               

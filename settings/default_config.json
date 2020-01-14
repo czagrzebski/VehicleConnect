@@ -1,0 +1,18 @@
+{
+    "vehicle": {
+      "max_rpm": 7000,
+      "max_speed": 150,
+      "number_of_gears": 6,
+      "gears": []
+    },
+  
+    "units": {
+      "speed": "MPH"
+    },
+  
+    "OBD": {
+      "port": "/dev/rfcomm1",
+      "mac_address": "8C:DE:52:C4:E5:84"
+  
+    }
+  }

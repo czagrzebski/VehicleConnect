@@ -9,6 +9,7 @@ import traceback
 import platform
 import numpy as np
 import obd
+import weakref
 from settings.settingsmanager import SettingsManager
 
 import kivy
@@ -52,6 +53,7 @@ from kivymd.uix.bottomnavigation import MDBottomNavigation
 from kivymd.uix.bottomnavigation import MDBottomNavigationBar
 from kivymd.uix.bottomnavigation import MDBottomNavigationHeader
 from kivymd.uix.bottomnavigation import MDBottomNavigationItem
+from kivymd.uix.dialog import MDInputDialog, MDDialog
 from kivymd.uix.label import MDLabel
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.list import IRightBodyTouch, ILeftBody
@@ -119,7 +121,6 @@ class VehicleConnect(MDApp):
     def build(self):
         self.settings_cls = SettingsWithSidebar
         main = Builder.load_file("data/main_ui.kv")
-        theme_cls = ThemeManager()
         self.theme_cls.theme_style = "Dark"
         self.sm = MyScreenManager()
         return main
@@ -200,8 +201,9 @@ class VehicleConnect(MDApp):
         #populate
         pass
 
-    def on_setting_change(self, section, key, value):
-        self.settings.set_setting(section, key, value)
+    def show_example_input_dialog(self):
+        dialog = SettingInputDialog("OBD Port", "This is a hint", "/dev/rfcomm1")
+        dialog.open()
 
     def on_start(self):
 
@@ -211,7 +213,6 @@ class VehicleConnect(MDApp):
         #bind rfcomm1 to bluetooth OBD adapter
         if developermode == False:
             obdUtility.set_rfcomm(self.config.get('OBD', 'obdmacaddress'))
-       
 
         # Initialize Vehicle Class
         self.vehicle = Vehicle()
@@ -242,11 +243,8 @@ class VehicleConnect(MDApp):
             #self.basic_popup("System", "Developer Mode Has Been Enabled!", "Ok", lambda x: self.close_current_popup())
             pass
         
-        
-        #!!!!!!!!!!
-        #Experimental Version WARNING...REMOVE BEFORE MERGING TO MASTER!!!
-
-        #self.basic_popup("System", "This is an experimental build! Expect Bugs", "Ok", lambda x: self.close_current_popup())
+        #TODO: Remove this before moving to master
+        #self.basic_popup("System", "This is an experimental build! Expect Bugs", "Ok", lambda x: self.close_current_popup())   
         
         self.current_dtc_codes = {}
         
@@ -258,12 +256,8 @@ class VehicleConnect(MDApp):
         #disable obd ui gauge updates on start
         self.update_ui_obd = False
 
-
         #update obd data 
         Clock.schedule_interval(lambda x: self.update_obd(), .1)
-
-        
-        
 
     def check_for_diagnostics(self):
             diagnostic_codes = obdUtility.get_diagnostic_codes()
@@ -284,18 +278,13 @@ class VehicleConnect(MDApp):
             self.check_for_diagnostics()
             time.sleep(.1)
             
-               
-
-    
     @mainthread
     def update_obd(self):
         try:
             if self.update_ui_obd == True:
-                start_time = time.time()
+           
                 # Get Dict of fetched OBD Data
                 obd_data = obdUtility.get_obd_data()
-                
-                print(obd_data["speed"])
                
                 # Get OBD Values from Returned Dict
                 # Convert Values to Percent (For Gauges)
@@ -337,7 +326,6 @@ class VehicleConnect(MDApp):
                 self.gear = self.vehicle.get_gear(
                     int(speedValue[0]), int(rpmValue[0])) 
 
-                print("--- %s seconds ---" % (time.time() - start_time))
 
         except Exception as uiUpdateError:
                 logging.error(
@@ -386,16 +374,12 @@ class VehicleConnect(MDApp):
                             size_hint=(None, None), size=(400, 300))
         popup.open()
 
-
-
 #######===SCREENS===#######
-
 
 class MyScreenManager(ScreenManager):
     HomeScreen = ObjectProperty(None)
     PerformanceHomeScreen = ObjectProperty(None)
     NavBar = ObjectProperty(None)
-
 
 class HomeScreen(Screen):
     pass
@@ -403,29 +387,56 @@ class HomeScreen(Screen):
 class PerformanceHomeScreen(Screen):
     pass
 
-
 ###########################
 
+####Setting Options####
 
-class AppDashboard(FloatLayout):
+class SettingInputDialog(MDInputDialog):
+    """Setting Input Dialog for Settings."""
+
+    def __init__(self, title, hint, text, **kwargs):
+        self.title = title
+        self.text = text
+        self.hint_text = hint
+        self.size_hint=(0.8, 0.4)
+        self.text_button_ok = "Ok"
+        self.text_button_cancel = "Cancel"
+    
+
+        #used super() in order to access textinput from parent of MDInputDialog class
+        super(SettingInputDialog,self).__init__(**kwargs)
+        self.events_callback = lambda u, x: self.on_ok_press()
+        self.text_field.text = self.text
+   
+    def on_ok_press(self):
+        """Event Callback - Runs when SettingInputDialog 'Ok' is pressed"""
+        logging.debug("SettingInputDialog Closed")
+
+class SettingBooleanSwitch():
     pass
 
+class SettingCheckBox():
+    pass
+
+###########################
+    
+class AppDashboard(FloatLayout):
+    pass
 
 class NavigationItem(OneLineAvatarListItem):
     icon = StringProperty()
 
-
 if __name__ == "__main__":
-    LOG_FILE = datetime.now().strftime('logs/vclog_%H_%M_%S_%d_%m_%Y.log')
-    logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG,
-                        format='VehicleConnect: %(message)s')
-    logging.debug("Vehicle Connect")
+    #TODO: Fix Logging 
+    logger = logging.getLogger('__main__')
+    logger.setLevel(logging.DEBUG)
+    logging.debug("DEBUGGING ENABLE")
     
+    #TODO: Change Logging Level based on Developer Mode
     if platform.system() == "Windows":
         developermode=True
         logging.debug("DEBUG MODE ENABLED FOR WINDOWS ENVIRONMENT")
-    
- 
+
     obdUtility = OBDUtility()
     vehicleConnect = VehicleConnect()
     vehicleConnect.run()

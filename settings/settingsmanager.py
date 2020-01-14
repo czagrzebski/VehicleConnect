@@ -10,14 +10,16 @@ class SettingsManager():
 
     def get_setting(self, section, key):
         """
-        Returns Setting Value
+        Returns Referenced Setting Value
         """
-        
         try:
             return self.config[section][key] 
         except KeyError as Error:
             logging.debug("Unable to find key")
             return None
+
+    def key_exists(self, section, key, value):
+        pass
 
     def set_setting(self, section, key, value):
         """
@@ -35,7 +37,7 @@ class SettingsManager():
 
     def restore_default_config(self):
         """
-        Restores VehicleConnect Configuration to the default configuration
+        Restores Configuration to the default configuration defined in settings\\default_config.json
 
         """
         pass

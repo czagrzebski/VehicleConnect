@@ -1,6 +1,6 @@
 {
   "vehicle": {
-    "max_rpm": 4000,
+    "max_rpm": 7000,
     "max_speed": 100,
     "number_of_gears": 6,
     "gears": []
