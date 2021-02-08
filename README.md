@@ -1,3 +1,3 @@
 # VehicleConnect
 
-RPi Performance Monitoring with Kivy
+A python-based application that reads and displays real-time vehicle diagnostic information from a CAN bus system.
